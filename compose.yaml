@@ -1,0 +1,7 @@
+
+services:
+  pidtelegrambot:
+    image: pidtelegrambot
+    build:
+      context: .
+      dockerfile: ./Dockerfile

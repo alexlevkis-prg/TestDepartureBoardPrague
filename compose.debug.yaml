@@ -1,0 +1,11 @@
+
+services:
+  pidtelegrambot:
+    image: pidtelegrambot
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+      args:
+        - configuration=Debug
+    volumes:
+      - ~/.vsdbg:c:\remote_debugger:rw

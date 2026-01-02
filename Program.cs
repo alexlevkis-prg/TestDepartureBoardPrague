@@ -9,6 +9,7 @@ internal class Program
     private static int locationMessageId = 0;
     private static int textMessageId = 0;
     private static int suggestionStopMessageId = 0;
+    private static long clientId = 0;
 
     private static IConfiguration configuration = new ConfigurationBuilder()
         .AddJsonFile("appsettings.json")
@@ -19,9 +20,9 @@ internal class Program
     {
         try
         {
-            if (string.IsNullOrEmpty(configuration["ClientId"]))
+            if (string.IsNullOrEmpty(configuration["clientId"]))
             {
-                throw new ArgumentNullException("ClientId", "ClientId parameter is not defined. Please set it in the settings.");
+                throw new ArgumentNullException("clientId", "ClientId parameter is not defined. Please set it in the settings.");
             }
             if (string.IsNullOrEmpty(configuration["PIDApiUrl"]))
             {
@@ -35,7 +36,12 @@ internal class Program
             {
                 throw new ArgumentNullException("dbFile", "dbFile parameter is not defined. Please set it in the settings.");
             }
-            Host host = new Host(configuration["ClientId"]);
+            if (string.IsNullOrEmpty(configuration["clientToken"]))
+            {
+                throw new ArgumentNullException("clientToken", "clientToken parameter is not defined. Please set it in the settings.");
+            }
+            Host host = new Host(configuration["clientToken"]);
+            clientId = long.Parse(configuration["clientId"]);
             host.Start();
             host.OnMessage += OnMessage;
             Console.ReadLine();
@@ -76,7 +82,7 @@ internal class Program
                         var departureBoard = await pidService.GetDepartureBoard(httpClient, departureBoardRequest);
                         var infoTexts = await pidService.GetStopInfoTexts(httpClient, stopsGtfs.ToList());
                         var departureBoardMessage = MessageBuilder.BuildStopDepartureBoardMessage(departureBoard, platformModels.First().Name, infoTexts);
-                        await DeleteLocationMessages(client, update.CallbackQuery?.Message?.Chat.Id ?? 8483304746);
+                        await DeleteLocationMessages(client, update.CallbackQuery?.Message?.Chat.Id ?? clientId);
                         await client.SendLocation(update.CallbackQuery.Message.Chat.Id,
                             (double)platformModels.First().Latitude,
                             (double)platformModels.First().Longitude);
@@ -92,7 +98,7 @@ internal class Program
         }
         else if (update.Message?.Text == "/start")
         {
-            await client.SendMessage(update.Message?.Chat.Id ?? 8483304746, MessageBuilder.BuildWelcomeMessage(), parseMode: Telegram.Bot.Types.Enums.ParseMode.Html);
+            await client.SendMessage(update.Message?.Chat.Id ?? clientId, MessageBuilder.BuildWelcomeMessage(), parseMode: Telegram.Bot.Types.Enums.ParseMode.Html);
         }
         else if (string.IsNullOrEmpty(update.Message?.Text))
         {
@@ -111,7 +117,7 @@ internal class Program
             if (stops.Count > 1)
             {
                 var buttons = MessageBuilder.BuildStopsSuggestions(stops);
-                var suggestionMessage = await client.SendMessage(update.Message?.Chat.Id ?? 8483304746,
+                var suggestionMessage = await client.SendMessage(update.Message?.Chat.Id ?? clientId,
                     $"Please select suggestions", 
                     parseMode: Telegram.Bot.Types.Enums.ParseMode.Html, 
                     replyMarkup: buttons);
@@ -132,7 +138,7 @@ internal class Program
     {
         if (string.IsNullOrEmpty(stopName))
         {
-            await client.SendMessage(update.Message?.Chat.Id ?? 8483304746, 
+            await client.SendMessage(update.Message?.Chat.Id ?? clientId, 
                     $"Sorry but no any stops exist with typed text. Please try do another attempt with different text", 
                     parseMode: Telegram.Bot.Types.Enums.ParseMode.Html);
             return;
@@ -145,14 +151,14 @@ internal class Program
             var buttons = MessageBuilder.BuildPlatformSuggestions(stopWithPlatforms.Stops);
             if (isUpdate)
             {
-                var textMsg = await client.EditMessageText(update.CallbackQuery?.Message?.Chat.Id ?? 8483304746, 
+                var textMsg = await client.EditMessageText(update.CallbackQuery?.Message?.Chat.Id ?? clientId, 
                     update.CallbackQuery.Message.Id,
                     $"<b>{stopName}</b>: Please select stop",
                     parseMode: Telegram.Bot.Types.Enums.ParseMode.Html);
                 
                 textMessageId = textMsg.MessageId;
                 
-                var locationMsg = await client.SendLocation(update.CallbackQuery?.Message?.Chat.Id ?? 8483304746, 
+                var locationMsg = await client.SendLocation(update.CallbackQuery?.Message?.Chat.Id ?? clientId, 
                     (double)stopWithPlatforms.Latitude,
                     (double)stopWithPlatforms.Longitude,
                     replyMarkup: buttons);
@@ -160,12 +166,12 @@ internal class Program
             }
             else
             {
-                var textMsg = await client.SendMessage(update.Message?.Chat.Id ?? 8483304746, 
+                var textMsg = await client.SendMessage(update.Message?.Chat.Id ?? clientId, 
                     $"<b>{stopName}</b>: Please select stop", 
                     parseMode: Telegram.Bot.Types.Enums.ParseMode.Html);
                 
                 textMessageId = textMsg.MessageId;
-                var locationMsg = await client.SendLocation(update.Message?.Chat.Id ?? 8483304746, 
+                var locationMsg = await client.SendLocation(update.Message?.Chat.Id ?? clientId, 
                     (double)stopWithPlatforms.Latitude,
                     (double)stopWithPlatforms.Longitude,
                     replyMarkup: buttons);
@@ -189,20 +195,20 @@ internal class Program
             var departureBoardMessage = MessageBuilder.BuildStopDepartureBoardMessage(departureBoard, platformModels.First().Name, infoTexts);
             if (isUpdate)
             {
-                await DeleteLocationMessages(client, update.CallbackQuery?.Message?.Chat.Id ?? 8483304746);
-                await client.SendLocation(update.CallbackQuery?.Message?.Chat.Id ?? 8483304746,
+                await DeleteLocationMessages(client, update.CallbackQuery?.Message?.Chat.Id ?? clientId);
+                await client.SendLocation(update.CallbackQuery?.Message?.Chat.Id ?? clientId,
                     (double)stopWithPlatforms.Latitude,
                     (double)stopWithPlatforms.Longitude);
-                await client.SendMessage(update.CallbackQuery?.Message?.Chat.Id ?? 8483304746,
+                await client.SendMessage(update.CallbackQuery?.Message?.Chat.Id ?? clientId,
                     departureBoardMessage,
                     parseMode: Telegram.Bot.Types.Enums.ParseMode.Html);
             }
             else
             {
-                await client.SendLocation(update.CallbackQuery?.Message?.Chat.Id ?? 8483304746,
+                await client.SendLocation(update.CallbackQuery?.Message?.Chat.Id ?? clientId,
                     (double)stopWithPlatforms.Latitude,
                     (double)stopWithPlatforms.Longitude);
-                await client.SendMessage(update.Message?.Chat.Id ?? 8483304746, 
+                await client.SendMessage(update.Message?.Chat.Id ?? clientId, 
                     departureBoardMessage, 
                     parseMode: Telegram.Bot.Types.Enums.ParseMode.Html);
             }
