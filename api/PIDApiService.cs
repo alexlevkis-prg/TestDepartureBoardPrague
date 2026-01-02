@@ -18,23 +18,6 @@ public sealed class PIDApiService
         
     }
 
-    public async Task<GetStopByNameResponse> GetGetStopByName(HttpClient httpClient, GetStopByNameRequest getStopByNameRequest)
-    {
-        try
-        {
-            var request = RequestBuilder.BuildGetStopByNameRequest(getStopByNameRequest);
-            using HttpResponseMessage responseMessage = await httpClient.GetAsync(request);
-            responseMessage.EnsureSuccessStatusCode();
-            var resultString = await responseMessage.Content.ReadAsStringAsync();
-            var content = JsonConvert.DeserializeObject<GetStopByNameResponse>(resultString);
-            return content;
-        }
-        catch(Exception ex)
-        {
-            throw ex;
-        }
-    }
-
     public async Task<DepartureBoardArrayModel> GetDepartureBoard(HttpClient httpClient, DepartureBoardRequest departureBoardRequest)
     {
         try

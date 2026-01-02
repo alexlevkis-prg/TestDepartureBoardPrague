@@ -8,10 +8,13 @@ internal class Program
 {
     private static int locationMessageId = 0;
     private static int textMessageId = 0;
+    private static int suggestionStopMessageId = 0;
 
     private static IConfiguration configuration = new ConfigurationBuilder()
         .AddJsonFile("appsettings.json")
         .Build();
+
+    private static string rootPath = AppDomain.CurrentDomain.BaseDirectory + "\\data";
     private static void Main()
     {
         try
@@ -27,10 +30,6 @@ internal class Program
             if (string.IsNullOrEmpty(configuration["apiToken"]))
             {
                 throw new ArgumentNullException("apiToken", "apiToken parameter is not defined. Please set it in the settings.");
-            }
-            if (string.IsNullOrEmpty(configuration["dbPath"]))
-            {
-                throw new ArgumentNullException("dbPath", "dbPath parameter is not defined. Please set it in the settings.");
             }
             if (string.IsNullOrEmpty(configuration["dbFile"]))
             {
@@ -72,7 +71,7 @@ internal class Program
                         var httpClient = ClientHelper.Instance;
                         var pidService = PIDApiService.Instance;
                         var databaseService = DatabaseService.Instance;
-                        var platformModels = databaseService.GetPlatformNameByCode(stopsGtfs, configuration["dbPath"], configuration["dbFile"]);
+                        var platformModels = databaseService.GetPlatformNameByCode(stopsGtfs, rootPath, configuration["dbFile"]);
                         var departureBoardRequest = RequestModelBuilder.CreateDepartureBoardRequest(stopsGtfs.ToList());
                         var departureBoard = await pidService.GetDepartureBoard(httpClient, departureBoardRequest);
                         var infoTexts = await pidService.GetStopInfoTexts(httpClient, stopsGtfs.ToList());
@@ -108,11 +107,15 @@ internal class Program
             var httpClient = ClientHelper.Instance;
             var pidService = PIDApiService.Instance;
             var databaseService = DatabaseService.Instance;
-            var stops = databaseService.GetStopsByName(update.Message?.Text, configuration["dbPath"], configuration["dbFile"]);
+            var stops = databaseService.GetStopsByName(update.Message?.Text, rootPath, configuration["dbFile"]);
             if (stops.Count > 1)
             {
                 var buttons = MessageBuilder.BuildStopsSuggestions(stops);
-                await client.SendMessage(update.Message?.Chat.Id ?? 8483304746, $"Please select suggestions", parseMode: Telegram.Bot.Types.Enums.ParseMode.Html, replyMarkup: buttons);
+                var suggestionMessage = await client.SendMessage(update.Message?.Chat.Id ?? 8483304746,
+                    $"Please select suggestions", 
+                    parseMode: Telegram.Bot.Types.Enums.ParseMode.Html, 
+                    replyMarkup: buttons);
+                suggestionStopMessageId = suggestionMessage.Id;
             }
             else if (stops.Count == 1)
             {
@@ -135,8 +138,8 @@ internal class Program
             return;
         }
         var databaseService = DatabaseService.Instance;
-        var stopWithPlatforms = databaseService.GetStopWithPlatforms(stopName, configuration["dbPath"], configuration["dbFile"]);
-        stopWithPlatforms.Stops = stopWithPlatforms.Stops.Where(s => s.TransportType != "undefined").ToList();
+        var stopWithPlatforms = databaseService.GetStopWithPlatforms(stopName, rootPath, configuration["dbFile"]);
+        stopWithPlatforms.Stops = stopWithPlatforms.Stops.ToList();
         if (stopWithPlatforms.Stops.Count > 2)
         {
             var buttons = MessageBuilder.BuildPlatformSuggestions(stopWithPlatforms.Stops);
@@ -179,13 +182,14 @@ internal class Program
             }
             var httpClient = ClientHelper.Instance;
             var pidService = PIDApiService.Instance;
-            var platformModels = databaseService.GetPlatformNameByCode(stopsGtfs.ToArray(), configuration["dbPath"], configuration["dbFile"]);
+            var platformModels = databaseService.GetPlatformNameByCode(stopsGtfs.ToArray(), rootPath, configuration["dbFile"]);
             var departureBoardRequest = RequestModelBuilder.CreateDepartureBoardRequest(stopsGtfs);
             var departureBoard = await pidService.GetDepartureBoard(httpClient, departureBoardRequest);
             var infoTexts = await pidService.GetStopInfoTexts(httpClient, stopsGtfs.ToList());
             var departureBoardMessage = MessageBuilder.BuildStopDepartureBoardMessage(departureBoard, platformModels.First().Name, infoTexts);
             if (isUpdate)
             {
+                await DeleteLocationMessages(client, update.CallbackQuery?.Message?.Chat.Id ?? 8483304746);
                 await client.SendLocation(update.CallbackQuery?.Message?.Chat.Id ?? 8483304746,
                     (double)stopWithPlatforms.Latitude,
                     (double)stopWithPlatforms.Longitude);
@@ -216,6 +220,11 @@ internal class Program
         {
             await client.DeleteMessage(chatId, textMessageId);
             textMessageId = 0;
+        }
+        if (suggestionStopMessageId > 0)
+        {
+            await client.DeleteMessage(chatId, suggestionStopMessageId);
+            suggestionStopMessageId = 0;
         }
     }
 }
