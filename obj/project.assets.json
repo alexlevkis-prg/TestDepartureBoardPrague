@@ -1248,11 +1248,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\LocalProjects\\PIDTelegramBot\\PIDTelegramBot.csproj",
+      "projectUniqueName": "C:\\LocalProjects\\GIT\\PIDTelegramBot.csproj",
       "projectName": "PIDTelegramBot",
-      "projectPath": "C:\\LocalProjects\\PIDTelegramBot\\PIDTelegramBot.csproj",
+      "projectPath": "C:\\LocalProjects\\GIT\\PIDTelegramBot.csproj",
       "packagesPath": "C:\\Users\\AliaxeiKisialev\\.nuget\\packages\\",
-      "outputPath": "C:\\LocalProjects\\PIDTelegramBot\\obj\\",
+      "outputPath": "C:\\LocalProjects\\GIT\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

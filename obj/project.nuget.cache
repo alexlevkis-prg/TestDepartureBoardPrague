@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "STLqZe954NM=",
+  "dgSpecHash": "6mWJ29ZkmDc=",
   "success": true,
-  "projectFilePath": "c:\\LocalProjects\\PIDTelegramBot\\PIDTelegramBot.csproj",
+  "projectFilePath": "c:\\LocalProjects\\GIT\\PIDTelegramBot.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\AliaxeiKisialev\\.nuget\\packages\\microsoft.data.sqlite\\10.0.1\\microsoft.data.sqlite.10.0.1.nupkg.sha512",
     "C:\\Users\\AliaxeiKisialev\\.nuget\\packages\\microsoft.data.sqlite.core\\10.0.1\\microsoft.data.sqlite.core.10.0.1.nupkg.sha512",
