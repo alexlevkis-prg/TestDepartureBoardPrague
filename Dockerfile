@@ -7,7 +7,7 @@ WORKDIR /src
 COPY ["PIDTelegramBot.csproj", "./"]
 RUN dotnet restore "PIDTelegramBot.csproj"
 COPY . .
-WORKDIR "/src/."
+WORKDIR "/src/"
 RUN dotnet build "PIDTelegramBot.csproj" -c $configuration -o /app/build
 
 FROM build AS publish
